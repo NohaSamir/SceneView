@@ -12,6 +12,8 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import com.example.sceneview.ui.theme.SceneViewTheme
+import com.google.android.filament.utils.Utils
+import com.gorisse.thomas.lifecycle.lifecycle
 import com.gorisse.thomas.lifecycle.lifecycleScope
 import io.github.sceneview.Scene
 import io.github.sceneview.loaders.loadHdrIndirectLight
@@ -24,6 +26,8 @@ import io.github.sceneview.nodes.Node
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        Utils.init()
 
         setContent {
             SceneViewTheme {
@@ -48,28 +52,30 @@ fun ModelScreen() {
             modifier = Modifier.fillMaxSize(),
             nodes = nodes,
             onCreate = { sceneView ->
-                // Apply your configuration
-                sceneView.lifecycleScope.launchWhenCreated {
-                    val hdrFile = "environments/studio_small_09_2k.hdr"
-                    sceneView.loadHdrIndirectLight(hdrFile, specularFilter = true) {
-                        intensity(30_000f)
-                    }
-                    sceneView.loadHdrSkybox(hdrFile) {
-                        intensity(50_000f)
-                    }
+                sceneView.apply {
+                    setLifecycle(lifecycle)
 
-                    val model = sceneView.modelLoader.loadModel("models/MaterialSuite.glb")!!
-                    val modelNode = ModelNode(sceneView, model).apply {
-                        transform(
-                            position = Position(z = -4.0f),
-                            rotation = Rotation(x = 15.0f)
-                        )
-                        scaleToUnitsCube(2.0f)
-                        // TODO: Fix centerOrigin
-                        // centerOrigin(Position(x=-1.0f, y=-1.0f))
-                        playAnimation()
+                    // Apply your configuration
+                    sceneView.lifecycleScope.launchWhenCreated {
+                        val hdrFile = "environments/studio_small_09_2k.hdr"
+                        sceneView.loadHdrIndirectLight(hdrFile, specularFilter = true) {
+                            intensity(30_000f)
+                        }
+                        sceneView.loadHdrSkybox(hdrFile) {
+                            intensity(50_000f)
+                        }
+
+                        val model = sceneView.modelLoader.loadModel("models/MaterialSuite.glb")!!
+                        val modelNode = ModelNode(sceneView, model).apply {
+                            transform(
+                                position = Position(z = -4.0f),
+                                rotation = Rotation(x = 15.0f)
+                            )
+                            scaleToUnitsCube(2.0f)
+                        }
+                        sceneView.addChildNode(modelNode)
+
                     }
-                    sceneView.addChildNode(modelNode)
                 }
             }
         )
